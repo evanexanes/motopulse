@@ -31,7 +31,7 @@ model and the saving.
 
 ## What I would change today
 - Passwords use plain SHA-256 with no salt. A real app needs a slow, salted hash such as bcrypt.
-- Dates are typed as text and parsed against six formats. A date picker would be safer.
+- Dates are typed as text and parsed against eleven formats. A date picker would be safer.
 - Everything is in one JSON file, which is fine for a class project and not for real users.
 
 ## Notes
