@@ -1,7 +1,7 @@
 # MotoPulse
 
-A terminal app for keeping track of motorcycle maintenance. Built in my first year of BSIT as a
-Python project.
+A terminal app for keeping track of motorcycle maintenance. Built with a classmate in my first year of BSIT, as a
+Python project for a data structures course.
 
 You register an account, add your motorcycles by plate number, and schedule maintenance tasks.
 MotoPulse ranks the open tasks by how overdue they are, so the job that needs doing first is at
