@@ -2,13 +2,14 @@
 # Description: Menu layer of MotoPulse, a terminal motorcycle maintenance tracker.
 #    Handles register and login, the motorcycle and task screens, date parsing and the
 #    undo command. The data model and file saving live in MotoPulse_UX.py.
-# Author: Exanes, Evan Prens (two-person team project)
+# Author: Exanes, Evan Prens; Prudenciado, Rhona-mae P.
 # Date Compiled: 10/08/2026
 # ======================================================================
 # Date           Description                      Programmer name
 # ======================================================================
 # 10/08/2026     Initial Implementation           EPPE
-# 11/09/2026     Added header and comments        EPPE
+# 11/09/2026     Added header and comments        EPPE with Claude
+# 11/09/2026     Default interval; prompt text    EPPE with Claude
 # ======================================================================
 
 import sys
@@ -21,8 +22,8 @@ from MotoPulse_UX import AppState, User, Motorcycle, MaintenanceTask, ServiceRec
 W = 38  # Characters per line. Rules are W wide and _c() centres text within W.
 
 # ── Maintenance Choices (Reference Constants) ─────────────────────────────────
-# Standard jobs offered by schedule_task. The "interval" values are reference figures only:
-# schedule_task never reads them and asks for the interval instead.
+# Standard jobs offered by schedule_task. "interval" is the service interval in km, offered as the
+# default the first time that job is scheduled for a motorcycle.
 STANDARD_TASKS = [
     {"name": "ENGINE OIL CHANGE", "desc": "DRAIN AND REPLACE ENGINE OIL", "interval": 2000},
     {"name": "GEAR OIL CHANGE [AT]", "desc": "REPLACE TRANSMISSION GEAR OIL", "interval": 6000},
@@ -577,6 +578,7 @@ class MotoPulseCLI:
             return
 
         # Handle Naming based on selection
+        default_interval = 0  # custom jobs have no standard interval
         if choice == custom_idx:
             name = tinput("Maintenance Name: ")
             description = tinput("Detailed Description: ")
@@ -585,6 +587,7 @@ class MotoPulseCLI:
             selected_task = STANDARD_TASKS[choice - 1]
             name = selected_task["name"]
             description = selected_task["desc"]
+            default_interval = selected_task["interval"]
             print(f"\nSELECTED: {name}")
 
         # ── Automated Memory Calculation Logic ──
@@ -595,7 +598,11 @@ class MotoPulseCLI:
             print(f"📍  AUTO-CALCULATED DUE MILEAGE: {due_mileage:,} KM")
         else:
             try:
-                suggested_mileage = int(ninput("Service Interval: "))
+                if default_interval:
+                    entered = ninput(f"Service Interval [{default_interval:,} KM, Enter to accept]: ")
+                    suggested_mileage = int(entered) if entered else default_interval
+                else:
+                    suggested_mileage = int(ninput("Service Interval: "))
                 due_mileage = int(ninput("Due at Mileage: "))
                 # Remember the interval so the next task with this name skips the prompts.
                 moto.custom_intervals[name] = suggested_mileage
@@ -686,7 +693,7 @@ class MotoPulseCLI:
             print("❌  INVALID COST FORMAT.")
             return
 
-        raw_date = ninput("DUE DATE [MONTH-DD-YEAR]: ")
+        raw_date = ninput("COMPLETION DATE [MONTH-DD-YEAR]: ")
         date = standardize_date(raw_date)
 
         # Copy the task first so undo can put it back in the pending list.

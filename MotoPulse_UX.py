@@ -2,13 +2,14 @@
 # Description: Data model and storage for MotoPulse: users, motorcycles, maintenance
 #    tasks, service records and the undo stack. Ranks open tasks with a heapq priority
 #    queue and saves everything to motopulse_data.json.
-# Author: Exanes, Evan Prens (two-person team project)
+# Author: Exanes, Evan Prens; Prudenciado, Rhona-mae P.
 # Date Compiled: 10/08/2026
 # ======================================================================
 # Date           Description                      Programmer name
 # ======================================================================
 # 10/08/2026     Initial Implementation           EPPE
-# 11/09/2026     Added header and comments        EPPE
+# 11/09/2026     Added header and comments        EPPE with Claude
+# 11/09/2026     Fixed due-date score dip         EPPE with Claude
 # ======================================================================
 
 import json
@@ -76,12 +77,12 @@ class MaintenanceTask:
     def calculate_urgency(self, current_mileage: int) -> int:
         """Score how overdue the task is: kilometres past due plus a date score. Higher is more urgent.
 
-        Each day past the due date adds 10, so one day counts as ten kilometres. In the week before
-        the date the score adds 0 to 6, rising as the date nears, then drops back to 0 on the due date
-        itself. A date that matches no format counts as zero days overdue.
+        The date score is 0 more than a week out, then climbs by 1 a day from 0 to 6, is 7 on the
+        due date and adds 10 for each day after it, so one day overdue counts as ten kilometres.
+        A date that matches no format adds nothing.
         """
         mileage_overdue = current_mileage - self.due_mileage
-        days_overdue = 0
+        days_overdue = None
         
         for fmt in DATE_FORMATS:
             try:
@@ -91,10 +92,12 @@ class MaintenanceTask:
             except ValueError:
                 continue
 
-        if days_overdue < 0:
+        if days_overdue is None:
+            date_score = 0
+        elif days_overdue < 0:
             date_score = 0 if days_overdue < -7 else (7 + days_overdue)
         else:
-            date_score = days_overdue * 10
+            date_score = max(7, days_overdue * 10)
 
         urgency_score = mileage_overdue + date_score
         return urgency_score
