@@ -1,23 +1,38 @@
+<div align="center">
+
 # MotoPulse
 
-A terminal app for keeping track of motorcycle maintenance. Built by Evan Exanes and Rhona-mae P. Prudenciado as a
-two-person team in first-year BSIT, for a data structures course.
+**A terminal app that tracks motorcycle maintenance and ranks open jobs by how overdue they are.**
 
-You register an account, add your motorcycles by plate number, and schedule maintenance tasks.
-MotoPulse ranks the open tasks by how overdue they are, so the job that needs doing first is at
-the top of the list.
+![Python 3.8+](https://img.shields.io/badge/Python-3.8%2B-3776AB?logo=python&logoColor=white)
+![Data structures](https://img.shields.io/badge/Uses-heapq%20%C2%B7%20stack%20%C2%B7%20JSON-2d4a7c)
+![Course](https://img.shields.io/badge/Course-Data%20Structures-555555)
+[![License: MIT](https://img.shields.io/badge/License-MIT-2d4a7c.svg)](LICENSE)
 
-## What it does
-- Register, log in and reset a password. Passwords are stored as SHA-256 hashes, never as text.
-- Add and edit motorcycles (plate, make, model, year, mileage).
-- Pick from nine standard jobs (oil change, chain, brake fluid and so on) or add your own.
-  Each job remembers the interval you set for it, and a standard job offers its usual interval as the default the first time.
-- Rank open tasks with a priority queue (`heapq`). Urgency adds the kilometres overdue to a
-  date score: 10 points for each day overdue, 7 on the due date and 1 to 6 in the week before.
-- Log completed work with its date and cost, and see the total spent per motorcycle.
-- Undo recent actions with a stack: new motorcycles, mileage updates, scheduled tasks, completed
-  maintenance and edits.
-- Save everything to a local `motopulse_data.json` file.
+</div>
+
+## Contents
+- [About](#about)
+- [Features](#features)
+- [Run it](#run-it)
+- [Project structure](#project-structure)
+- [What I would change today](#what-i-would-change-today)
+- [Changes after submission](#changes-after-submission)
+- [Source file headers](#source-file-headers)
+- [License](#license)
+- [Authors](#authors)
+
+## About
+You register an account, add your motorcycles by plate number and schedule maintenance tasks. MotoPulse ranks the open tasks by how overdue they are, so the job that needs doing first is at the top of the list. Two first-year BSIT students built it as a team project for a data structures course.
+
+## Features
+- **Accounts.** Register, log in and reset a password. Passwords are stored as SHA-256 hashes, never as text.
+- **Motorcycles.** Add and edit them with plate, make, model, year and mileage.
+- **Jobs.** Pick from nine standard jobs (oil change, chain, brake fluid and so on) or add your own. Each job remembers the interval you set, and a standard job offers its usual interval as the default the first time.
+- **Priority queue.** Open tasks are ranked with `heapq`. Urgency adds the kilometres overdue to a date score: 10 points for each day overdue, 7 on the due date and 1 to 6 in the week before.
+- **Service log.** Record completed work with its date and cost, and see the total spent per motorcycle.
+- **Undo.** A stack reverses recent actions: new motorcycles, mileage updates, scheduled tasks, completed maintenance and edits.
+- **Saving.** Everything goes to a local `motopulse_data.json` file.
 
 ## Run it
 Python 3.8 or newer. No packages to install.
@@ -26,29 +41,53 @@ Python 3.8 or newer. No packages to install.
 python MotoPulse_UI.py
 ```
 
-Keep both files in the same folder. `MotoPulse_UI.py` is the menus, `MotoPulse_UX.py` is the data
-model and the saving.
+Keep both files in the same folder. `MotoPulse_UI.py` is the menus, and `MotoPulse_UX.py` is the data model and the saving.
 
-## What I would change today
-- Passwords use plain SHA-256 with no salt. A real app needs a slow, salted hash such as bcrypt.
-- Dates are typed as text and parsed against eleven formats. A date picker would be safer.
-- Everything is in one JSON file, which is fine for a class project and not for real users.
-
-## Project layout
+## Project structure
 
 | File | Role |
 |---|---|
 | `MotoPulse_UI.py` | The menus: login, dashboard, motorcycle screens, date parsing and undo |
 | `MotoPulse_UX.py` | The data model (users, motorcycles, tasks, service records), the priority queue and the JSON saving |
 
-## Notes
-First-year coursework, shared as it was submitted apart from small edits and the changes below.
+## What I would change today
+- Passwords use plain SHA-256 with no salt. A real app needs a slow, salted hash such as bcrypt.
+- Dates are typed as text and parsed against eleven formats. A date picker would be safer.
+- Everything is in one JSON file, which is fine for a class project and not for real users.
 
-Changes after submission:
+## Changes after submission
+The code is first-year coursework, shared as it was submitted apart from small edits and these changes:
 - A header block, comments and docstrings in both files.
 - The urgency score no longer falls to 0 on the due date. Before, a task due tomorrow outranked one due today.
 - The completed-work prompt asks for the COMPLETION DATE. It used to say DUE DATE.
 - Standard jobs offer their usual interval as the default.
 
 ## Source file headers
-Every source file opens with a header block: program name, description, author, date compiled and a change history. A commit that changes a file adds a row to its history.
+Every source file opens with the block below. A commit that changes a file adds a row to its history table.
+
+```text
+Program name: <file name>
+Description: <what the file does>
+Author: Exanes, Evan Prens; Prudenciado, Rhona-mae P.
+Date Compiled: MM/DD/YYYY
+======================================================================
+Date           Description                      Programmer name
+======================================================================
+MM/DD/YYYY     Initial Implementation           EPPE, RMPP
+======================================================================
+```
+
+| Initials | Person |
+|---|---|
+| `EPPE` | Evan Prens P. Exanes |
+| `RMPP` | Rhona-mae P. Prudenciado |
+| `with Claude` | Added after the initials when the change was written with AI help |
+
+## License
+Released under the [MIT License](LICENSE).
+
+## Authors
+- **Evan Prens P. Exanes** · [GitHub](https://github.com/evanexanes) · [Portfolio](https://evanexanes.github.io/)
+- **Rhona-mae P. Prudenciado**
+
+See the [case study](https://evanexanes.github.io/09-case-study-motopulse.html) on the portfolio.
