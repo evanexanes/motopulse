@@ -9,6 +9,10 @@
 ![Course](https://img.shields.io/badge/Course-Data%20Structures-555555)
 [![License: MIT](https://img.shields.io/badge/License-MIT-2d4a7c.svg)](LICENSE)
 
+<img src="docs/screenshot.webp" alt="MotoPulse showing the motorcycle menu and the prioritized alerts list, with the overdue engine oil change ranked first" width="860">
+
+<sub>A sample session with demo data: the overdue oil change ranks above the two upcoming jobs.</sub>
+
 </div>
 
 ## Contents
