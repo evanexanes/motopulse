@@ -11,6 +11,7 @@
 # 11/09/2026     Added header and comments        EPPE with Claude
 # 11/09/2026     Default interval; prompt text    EPPE with Claude
 # 11/09/2026     Added RMPP initials              EPPE with Claude
+# 11/09/2026     Plain section comments           EPPE with Claude
 # ======================================================================
 
 import sys
@@ -19,10 +20,10 @@ from getpass import getpass
 from datetime import datetime
 from MotoPulse_UX import AppState, User, Motorcycle, MaintenanceTask, ServiceRecord
 
-# ── Layout Constants ──────────────────────────────────────────────────────────
+# Layout constants
 W = 38  # Characters per line. Rules are W wide and _c() centres text within W.
 
-# ── Maintenance Choices (Reference Constants) ─────────────────────────────────
+# Maintenance choices (reference constants)
 # Standard jobs offered by schedule_task. "interval" is the service interval in km, offered as the
 # default the first time that job is scheduled for a motorcycle.
 STANDARD_TASKS = [
@@ -37,7 +38,7 @@ STANDARD_TASKS = [
     {"name": "COOLANT REPLACEMENT", "desc": "DRAIN AND REPLACE RADIATOR CORE COOLANT", "interval": 15000},
 ]
 
-# ── Custom Exceptions ─────────────────────────────────────────────────────────
+# Custom exceptions
 
 class CancelOperation(Exception):
     """Raised when the user intentionally cancels an operation."""
@@ -45,7 +46,7 @@ class CancelOperation(Exception):
     pass
 
 
-# ── Layout & Parsing Utilities ────────────────────────────────────────────────
+# Layout and parsing utilities
 
 def visual_width(text: str) -> int:
     """Terminal columns the text takes. Emoji count as two, and the U+FE0F variation selector as zero."""
@@ -129,14 +130,14 @@ def standardize_date(date_input: str) -> str:
     return date_input.upper()
 
 
-# ── Password Utility ──────────────────────────────────────────────────────────
+# Password utility
 
 def hash_password(password: str) -> str:
     """Return the SHA-256 hex digest of the password. Unsalted: fine for a class project, not for real accounts."""
     return hashlib.sha256(password.encode()).hexdigest()
 
 
-# ── CLI Application ───────────────────────────────────────────────────────────
+# CLI application
 
 class MotoPulseCLI:
     """Terminal menus: authentication, then the dashboard, then one motorcycle at a time."""
@@ -161,7 +162,7 @@ class MotoPulseCLI:
             else:
                 self.user_dashboard()
 
-    # ── Authentication ────────────────────────────────────────────────────────
+    # Authentication
 
     def auth_menu(self):
         print("\n" + "─" * W)
@@ -255,7 +256,7 @@ class MotoPulseCLI:
         self.app_state.save_data()
         print("✅  PASSWORD UPDATED SUCCESSFULLY! PLEASE LOG IN.")
 
-    # ── Dashboard ─────────────────────────────────────────────────────────────
+    # Dashboard
 
     def user_dashboard(self):
         print("\n" + "═" * W)
@@ -288,7 +289,7 @@ class MotoPulseCLI:
         except CancelOperation:
             print("\n🚫  ACTION CANCELLED. RETURNING TO DASHBOARD...")
 
-    # ── Motorcycle Management ─────────────────────────────────────────────────
+    # Motorcycle management
 
     def add_motorcycle(self):
         print("\n" + "─" * W)
@@ -418,7 +419,7 @@ class MotoPulseCLI:
             except CancelOperation:
                 print("\n🚫  ACTION CANCELLED. RETURNING TO MENU...")
 
-    # ── Operational Dashboards ────────────────────────────────────────────────
+    # Operational dashboards
 
     def edit_motorcycle(self, moto: Motorcycle):
         print("\n" + "─" * W)
@@ -526,7 +527,7 @@ class MotoPulseCLI:
         except ValueError:
             print("❌  INVALID INTERVAL FORMAT.")
 
-    # ── Core Operations ───────────────────────────────────────────────────────
+    # Core operations
 
     def log_mileage(self, moto: Motorcycle):
         print("\n" + "─" * W)
@@ -591,7 +592,7 @@ class MotoPulseCLI:
             default_interval = selected_task["interval"]
             print(f"\nSELECTED: {name}")
 
-        # ── Automated Memory Calculation Logic ──
+        # Automated memory calculation logic
         if name in moto.custom_intervals:
             suggested_mileage = moto.custom_intervals[name]
             print(f"🔄  AUTO-APPLYING SAVED INTERVAL: {suggested_mileage:,} KM")
@@ -720,7 +721,7 @@ class MotoPulseCLI:
 
         print(f"✅  MAINTENANCE LOGGED! TOTAL VEHICLE EXPENSES: ₱{moto.get_total_expenses():,.2f}")
 
-    # ── Undo ──────────────────────────────────────────────────────────────────
+    # Undo
 
     def undo_last_action(self):
         """Reverse the most recent action on the undo stack.
@@ -786,7 +787,7 @@ class MotoPulseCLI:
         input(_r("Press Enter to continue..."))
 
 
-# ── Entry Point ───────────────────────────────────────────────────────────────
+# Entry point
 
 if __name__ == "__main__":
     cli = MotoPulseCLI()
