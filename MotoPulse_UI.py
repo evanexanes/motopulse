@@ -1,3 +1,17 @@
+# Program name: MotoPulse_UI.py
+# Description: Menu layer of MotoPulse, a terminal motorcycle maintenance tracker.
+#    Handles register and login, the motorcycle and task screens, date parsing and the
+#    undo command. The data model and file saving live in MotoPulse_UX.py.
+# Author: Exanes, Evan Prens; Prudenciado, Rhona-mae P.
+# Date Compiled: 10/08/2026
+# ======================================================================
+# Date           Description                      Programmer name
+# ======================================================================
+# 10/08/2026     Initial Implementation           EPPE
+# 11/09/2026     Added header and comments        EPPE with Claude
+# 11/09/2026     Default interval; prompt text    EPPE with Claude
+# ======================================================================
+
 import sys
 import hashlib
 from getpass import getpass
@@ -5,9 +19,11 @@ from datetime import datetime
 from MotoPulse_UX import AppState, User, Motorcycle, MaintenanceTask, ServiceRecord
 
 # ── Layout Constants ──────────────────────────────────────────────────────────
-W = 38  # Layout width optimized for new menu items
+W = 38  # Characters per line. Rules are W wide and _c() centres text within W.
 
 # ── Maintenance Choices (Reference Constants) ─────────────────────────────────
+# Standard jobs offered by schedule_task. "interval" is the service interval in km, offered as the
+# default the first time that job is scheduled for a motorcycle.
 STANDARD_TASKS = [
     {"name": "ENGINE OIL CHANGE", "desc": "DRAIN AND REPLACE ENGINE OIL", "interval": 2000},
     {"name": "GEAR OIL CHANGE [AT]", "desc": "REPLACE TRANSMISSION GEAR OIL", "interval": 6000},
@@ -24,12 +40,14 @@ STANDARD_TASKS = [
 
 class CancelOperation(Exception):
     """Raised when the user intentionally cancels an operation."""
+
     pass
 
 
 # ── Layout & Parsing Utilities ────────────────────────────────────────────────
 
 def visual_width(text: str) -> int:
+    """Terminal columns the text takes. Emoji count as two, and the U+FE0F variation selector as zero."""
     width = 0
     for char in text:
         if char == '\ufe0f': continue
@@ -42,6 +60,7 @@ def visual_width(text: str) -> int:
 
 
 def _c(text: str) -> str:
+    """Centre text within W columns. Text already W or wider is returned unchanged."""
     vis_w = visual_width(text)
     if vis_w >= W: return text
     left_padding = (W - vis_w) // 2
@@ -50,6 +69,7 @@ def _c(text: str) -> str:
 
 
 def _r(prompt: str) -> str:
+    """Return the prompt unchanged. Every prompt passes through this function."""
     return prompt
 
 
@@ -74,7 +94,10 @@ def ninput(prompt: str) -> str:
 
 
 def standardize_date(date_input: str) -> str:
-    """Intelligent date parser: Converts any date to 'MONTH-DD-YEAR' format."""
+    """Convert a typed date to MONTH-DD-YEAR in capitals, for example NOVEMBER-09-2026.
+
+    Blank, N/A or X returns N/A. Text that matches no format is returned upper-cased as typed.
+    """
     if not date_input or date_input.upper() == "N/A" or date_input.upper() == "X":
         return "N/A"
         
@@ -82,9 +105,12 @@ def standardize_date(date_input: str) -> str:
     clean = ' '.join(clean.split())
     
     upper_clean = clean.upper()
+    # strptime reads "Sep", not "Sept", so shorten it first.
     if "SEPT " in upper_clean or "SEPT-" in upper_clean:
         clean = upper_clean.replace("SEPT", "SEP")
         
+    # Month names, numeric month-first, year-first and day-first forms. Slash dates are tried
+    # month-first before day-first, so 03/04/2026 reads as March 4.
     formats = [
         "%B %d %Y", "%b %d %Y", "%m %d %Y",
         "%B-%d-%Y", "%b-%d-%Y", "%m-%d-%Y",
@@ -105,12 +131,15 @@ def standardize_date(date_input: str) -> str:
 # ── Password Utility ──────────────────────────────────────────────────────────
 
 def hash_password(password: str) -> str:
+    """Return the SHA-256 hex digest of the password. Unsalted: fine for a class project, not for real accounts."""
     return hashlib.sha256(password.encode()).hexdigest()
 
 
 # ── CLI Application ───────────────────────────────────────────────────────────
 
 class MotoPulseCLI:
+    """Terminal menus: authentication, then the dashboard, then one motorcycle at a time."""
+
     def __init__(self):
         self.app_state = AppState()
         self.app_state.load_data()
@@ -124,6 +153,7 @@ class MotoPulseCLI:
         print("═" * W)
 
     def main_menu(self):
+        """Show the login menu or the dashboard, forever. The program ends through sys.exit in auth_menu."""
         while True:
             if not self.current_user:
                 self.auth_menu()
@@ -239,6 +269,7 @@ class MotoPulseCLI:
 
         choice = input(_r("Select an option (1-4, U): ")).strip().lower()
 
+        # X at any prompt raises CancelOperation, which is caught here and returns to this menu.
         try:
             if choice == '1':
                 self.add_motorcycle()
@@ -340,6 +371,7 @@ class MotoPulseCLI:
             urgent_tasks = moto.get_tasks_by_priority()
 
             print("\n" + "═" * W)
+            # Scores sort high to low, so only the first needs checking for an overdue task.
             if urgent_tasks and urgent_tasks[0][0] > 0:
                 print(_c("⚠️  URGENT MAINTENANCE REQUIRED  ⚠️"))
                 print(_c("CHECK YOUR PRIORITIZED ALERTS NOW!"))
@@ -396,6 +428,7 @@ class MotoPulseCLI:
         print("LEAVE BLANK TO KEEP THE CURRENT VALUE.")
         print("─" * W)
 
+        # Saved first so undo can restore the old values.
         old_make  = moto.make
         old_model = moto.model
         old_year  = moto.year
@@ -501,6 +534,7 @@ class MotoPulseCLI:
         print("─" * W)
         try:
             new_mileage = int(ninput("Enter new current mileage (km): "))
+            # The odometer cannot go backwards.
             if new_mileage >= moto.current_mileage:
                 old_mileage = moto.current_mileage
                 moto.current_mileage = new_mileage
@@ -544,6 +578,7 @@ class MotoPulseCLI:
             return
 
         # Handle Naming based on selection
+        default_interval = 0  # custom jobs have no standard interval
         if choice == custom_idx:
             name = tinput("Maintenance Name: ")
             description = tinput("Detailed Description: ")
@@ -552,6 +587,7 @@ class MotoPulseCLI:
             selected_task = STANDARD_TASKS[choice - 1]
             name = selected_task["name"]
             description = selected_task["desc"]
+            default_interval = selected_task["interval"]
             print(f"\nSELECTED: {name}")
 
         # ── Automated Memory Calculation Logic ──
@@ -562,8 +598,13 @@ class MotoPulseCLI:
             print(f"📍  AUTO-CALCULATED DUE MILEAGE: {due_mileage:,} KM")
         else:
             try:
-                suggested_mileage = int(ninput("Service Interval: "))
+                if default_interval:
+                    entered = ninput(f"Service Interval [{default_interval:,} KM, Enter to accept]: ")
+                    suggested_mileage = int(entered) if entered else default_interval
+                else:
+                    suggested_mileage = int(ninput("Service Interval: "))
                 due_mileage = int(ninput("Due at Mileage: "))
+                # Remember the interval so the next task with this name skips the prompts.
                 moto.custom_intervals[name] = suggested_mileage
             except ValueError:
                 print("❌  INVALID INPUT. MILEAGE MUST BE A NUMBER.")
@@ -652,9 +693,10 @@ class MotoPulseCLI:
             print("❌  INVALID COST FORMAT.")
             return
 
-        raw_date = ninput("DUE DATE [MONTH-DD-YEAR]: ")
+        raw_date = ninput("COMPLETION DATE [MONTH-DD-YEAR]: ")
         date = standardize_date(raw_date)
 
+        # Copy the task first so undo can put it back in the pending list.
         completed_task_dict = completed_task.to_dict()
         moto.pending_tasks = [t for t in moto.pending_tasks if t.task_id != completed_task.task_id]
 
@@ -680,6 +722,10 @@ class MotoPulseCLI:
     # ── Undo ──────────────────────────────────────────────────────────────────
 
     def undo_last_action(self):
+        """Reverse the most recent action on the undo stack.
+
+        Each stack entry holds just enough to restore the old value, such as old_mileage.
+        """
         action = self.app_state.pop_action()
         if not action:
             print("❌  NOTHING TO UNDO.")
@@ -687,6 +733,7 @@ class MotoPulseCLI:
             return
 
         print(f"↩️   UNDOING LAST ACTION: {action['type'].upper()}...")
+        # Undo applies to the user who made the action, even if someone else is logged in now.
         user = self.app_state.users.get(action['username'])
         if not user:
             print("❌  ERROR: USER FOR THIS ACTION NO LONGER EXISTS.")

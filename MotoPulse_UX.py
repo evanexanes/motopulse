@@ -1,14 +1,31 @@
+# Program name: MotoPulse_UX.py
+# Description: Data model and storage for MotoPulse: users, motorcycles, maintenance
+#    tasks, service records and the undo stack. Ranks open tasks with a heapq priority
+#    queue and saves everything to motopulse_data.json.
+# Author: Exanes, Evan Prens; Prudenciado, Rhona-mae P.
+# Date Compiled: 10/08/2026
+# ======================================================================
+# Date           Description                      Programmer name
+# ======================================================================
+# 10/08/2026     Initial Implementation           EPPE
+# 11/09/2026     Added header and comments        EPPE with Claude
+# 11/09/2026     Fixed due-date score dip         EPPE with Claude
+# ======================================================================
+
 import json
 import os
 import heapq
 from datetime import datetime
 from typing import Dict, List, Optional, Tuple
 
-# Supported date formats — updated to handle various spacing of MONTH-DD-YEAR
+# Formats tried in order when scoring urgency. The UI stores dates as MONTH-DD-YEAR, the first
+# entry. The others cover spaced and numeric variants.
 DATE_FORMATS = ["%B-%d-%Y", "%B - %d - %Y", "%m-%d-%Y", "%m - %d - %Y", "%B %d, %Y", "%Y-%m-%d"]
 
 
 class ServiceRecord:
+    """One completed job: its date, the mileage and cost, and what was done."""
+
     def __init__(self, date: str, mileage: int, cost: float, description: str):
         self.date = date
         self.mileage = mileage
@@ -34,6 +51,8 @@ class ServiceRecord:
 
 
 class MaintenanceTask:
+    """A scheduled job with a due mileage and a due date. Either one can make it overdue."""
+
     def __init__(
         self,
         name: str,
@@ -43,6 +62,7 @@ class MaintenanceTask:
         suggested_mileage: int = 0,
         task_id: Optional[str] = None
     ):
+        # Timestamp as a string id. Tasks loaded from the save file keep the id they were saved with.
         self.task_id = task_id or str(datetime.now().timestamp())
         self.name = name                          
         self.description = description            
@@ -55,8 +75,14 @@ class MaintenanceTask:
         return self.task_id < other.task_id
 
     def calculate_urgency(self, current_mileage: int) -> int:
+        """Score how overdue the task is: kilometres past due plus a date score. Higher is more urgent.
+
+        The date score is 0 more than a week out, then climbs by 1 a day from 0 to 6, is 7 on the
+        due date and adds 10 for each day after it, so one day overdue counts as ten kilometres.
+        A date that matches no format adds nothing.
+        """
         mileage_overdue = current_mileage - self.due_mileage
-        days_overdue = 0
+        days_overdue = None
         
         for fmt in DATE_FORMATS:
             try:
@@ -66,10 +92,12 @@ class MaintenanceTask:
             except ValueError:
                 continue
 
-        if days_overdue < 0:
+        if days_overdue is None:
+            date_score = 0
+        elif days_overdue < 0:
             date_score = 0 if days_overdue < -7 else (7 + days_overdue)
         else:
-            date_score = days_overdue * 10
+            date_score = max(7, days_overdue * 10)
 
         urgency_score = mileage_overdue + date_score
         return urgency_score
@@ -86,6 +114,7 @@ class MaintenanceTask:
 
     @classmethod
     def from_dict(cls, data: dict):
+        # Older save files have no "name" field, so the description doubles as the name.
         legacy_desc = data.get("description", "MAINTENANCE")
         return cls(
             task_id=data.get("task_id"),
@@ -98,6 +127,8 @@ class MaintenanceTask:
 
 
 class Motorcycle:
+    """One motorcycle with its service history, open tasks and remembered service intervals."""
+
     def __init__(self, plate_number: str, make: str, model: str, year: int, current_mileage: int):
         self.plate_number = plate_number
         self.make = make
@@ -108,7 +139,7 @@ class Motorcycle:
         self.service_history: List[ServiceRecord] = []
         self.pending_tasks: List[MaintenanceTask] = []
         
-        # Memory Dictionary: Remembers user-defined intervals for automatic calculation
+        # Task name to interval in km. Scheduling the same task again reuses it instead of asking.
         self.custom_intervals: Dict[str, int] = {}
 
     def add_service_record(self, record: ServiceRecord):
@@ -118,6 +149,10 @@ class Motorcycle:
         self.pending_tasks.append(task)
 
     def get_tasks_by_priority(self) -> List[Tuple[int, MaintenanceTask]]:
+        """Return (urgency, task) pairs, most urgent first.
+
+        Scores are negated so the min-heap pops the highest first. Ties go to the smaller task_id.
+        """
         task_heap = []
         for task in self.pending_tasks:
             urgency = task.calculate_urgency(self.current_mileage)
@@ -163,6 +198,8 @@ class Motorcycle:
 
 
 class User:
+    """An account holder. Motorcycles are keyed by plate number."""
+
     def __init__(self, username: str, password_hash: str):
         self.username = username
         self.password_hash = password_hash
@@ -193,12 +230,15 @@ class User:
 
 
 class AppState:
+    """All users plus the undo stack, saved together in one JSON file."""
+
     def __init__(self, data_file: str = "motopulse_data.json"):
         self.data_file = data_file
         self.users: Dict[str, User] = {}
         self.action_stack = []
 
     def push_action(self, action: dict):
+        """Record how to reverse the latest change. The stack is shared by every user and saved to disk."""
         self.action_stack.append(action)
 
     def pop_action(self) -> Optional[dict]:
@@ -207,6 +247,7 @@ class AppState:
         return None
 
     def save_data(self):
+        """Write users and the undo stack to the JSON file. A failed write prints a message and does not raise."""
         data = {
             "users": {username: user.to_dict() for username, user in self.users.items()},
             "action_stack": self.action_stack
@@ -218,6 +259,7 @@ class AppState:
             print(f"Failed to save data: {e}")
 
     def load_data(self):
+        """Read the JSON file if it exists. A corrupt or unexpected file is reported and the app starts empty."""
         if not os.path.exists(self.data_file):
             return
         try:
@@ -226,6 +268,7 @@ class AppState:
                 if not isinstance(data, dict):
                     print("Warning: Data file has unexpected format, starting fresh.")
                     return
+                # Older files are a bare users dict with no undo stack.
                 if "users" in data:
                     users_data = data["users"]
                     self.action_stack = data.get("action_stack", [])
