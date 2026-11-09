@@ -12,6 +12,7 @@
 # 11/09/2026     Default interval; prompt text    EPPE with Claude
 # 11/09/2026     Added RMPP initials              EPPE with Claude
 # 11/09/2026     Plain section comments           EPPE with Claude
+# 11/09/2026     Added method comments            EPPE with Claude
 # ======================================================================
 
 import sys
@@ -143,11 +144,13 @@ class MotoPulseCLI:
     """Terminal menus: authentication, then the dashboard, then one motorcycle at a time."""
 
     def __init__(self):
+        """Load the saved data from disk and start with nobody logged in."""
         self.app_state = AppState()
         self.app_state.load_data()
         self.current_user = None
 
     def display_welcome(self):
+        """Print the MotoPulse title banner."""
         print("\n" + "═" * W)
         print(_c("🏍️  MOTOPULSE  🏍️"))
         print(_c("MOTORCYCLE MAINTENANCE TRACKER"))
@@ -165,6 +168,7 @@ class MotoPulseCLI:
     # Authentication
 
     def auth_menu(self):
+        """Show the login menu (login, register, forgot password, exit) and run the chosen option."""
         print("\n" + "─" * W)
         print(_c("🔐  AUTHENTICATION MENU  🔐"))
         print("─" * W)
@@ -190,6 +194,7 @@ class MotoPulseCLI:
             print("❌  INVALID OPTION. PLEASE TRY AGAIN.")
 
     def login(self):
+        """Ask for a username and password. current_user is set when the SHA-256 hash matches the saved one."""
         print("\n" + "─" * W)
         print(_c("🔐  LOGIN"))
         print("─" * W)
@@ -204,6 +209,7 @@ class MotoPulseCLI:
             print("❌  ERROR: INVALID USERNAME OR PASSWORD.")
 
     def register(self):
+        """Create a new account. The username must be new and not empty, and the password must be typed twice. Saves the data file."""
         print("\n" + "─" * W)
         print(_c("📝  REGISTER"))
         print("─" * W)
@@ -232,6 +238,7 @@ class MotoPulseCLI:
         print(f"✅  REGISTRATION SUCCESSFUL! YOU CAN NOW LOG IN, {username.upper()}.")
 
     def forgot_password(self):
+        """Reset a password from the username alone. There is no identity check, which a classroom app can accept but a real one could not."""
         print("\n" + "─" * W)
         print(_c("🔑  FORGOT PASSWORD"))
         print("─" * W)
@@ -259,6 +266,7 @@ class MotoPulseCLI:
     # Dashboard
 
     def user_dashboard(self):
+        """Show the motorcycle menu: add, view, select, log out or undo. Typing X at any prompt cancels and returns here."""
         print("\n" + "═" * W)
         print(_c(f"📊  {self.current_user.username.upper()}'S DASHBOARD  📊"))
         print("═" * W)
@@ -292,6 +300,7 @@ class MotoPulseCLI:
     # Motorcycle management
 
     def add_motorcycle(self):
+        """Ask for plate, make, model, year and mileage, add the motorcycle to the current user and save. A repeated plate or a non-numeric year or mileage ends the flow without adding. Records an undo entry."""
         print("\n" + "─" * W)
         print(_c("🏍️   ADD A MOTORCYCLE"))
         print(_c("(Type 'X' to cancel)"))
@@ -337,6 +346,7 @@ class MotoPulseCLI:
         print(f"✅  '{make} {model}' ({plate_number}) HAS BEEN ADDED!")
 
     def view_motorcycles(self):
+        """List the current user's motorcycles, or say there are none."""
         print("\n" + "─" * W)
         print(_c("📋  YOUR MOTORCYCLES"))
         print("─" * W)
@@ -350,6 +360,7 @@ class MotoPulseCLI:
         input(_r("Press Enter to continue..."))
 
     def select_motorcycle(self):
+        """Ask for a plate number and open that motorcycle's menu."""
         if not self.current_user.motorcycles:
             print("❌  YOU HAVE NO MOTORCYCLES. ADD ONE FIRST.")
             return
@@ -369,6 +380,7 @@ class MotoPulseCLI:
             print("❌  MOTORCYCLE NOT FOUND.")
 
     def manage_motorcycle(self, moto: Motorcycle):
+        """Menu for one motorcycle: mileage, tasks, alerts, completed jobs, edits, history and intervals. Warns at the top when the most urgent task is overdue."""
         while True:
             urgent_tasks = moto.get_tasks_by_priority()
 
@@ -422,6 +434,7 @@ class MotoPulseCLI:
     # Operational dashboards
 
     def edit_motorcycle(self, moto: Motorcycle):
+        """Change make, model or year. Pressing Enter keeps the old value. The old values go on the undo stack."""
         print("\n" + "─" * W)
         print(_c("✏️  EDIT MOTORCYCLE INFO"))
         print(_c("(Type 'X' to cancel)"))
@@ -461,6 +474,7 @@ class MotoPulseCLI:
         print(f"✅  MOTORCYCLE UPDATED TO: {moto.make} {moto.model} ({moto.year})")
 
     def view_logged_maintenance(self, moto: Motorcycle):
+        """List the completed jobs in this motorcycle's service history."""
         print("\n" + "─" * W)
         print(_c("📋  VIEW LOGGED MAINTENANCE HISTORY"))
         print("─" * W)
@@ -477,6 +491,7 @@ class MotoPulseCLI:
         input(_r("Press Enter to return..."))
 
     def manage_task_intervals(self, moto: Motorcycle):
+        """Pick one remembered service interval and change it. The old interval goes on the undo stack."""
         print("\n" + "─" * W)
         print(_c("⚙️  MANAGE TASK INTERVALS"))
         print(_c("(Type 'X' to cancel)"))
@@ -530,6 +545,7 @@ class MotoPulseCLI:
     # Core operations
 
     def log_mileage(self, moto: Motorcycle):
+        """Update the odometer reading. A reading lower than the current one is rejected. Undo restores the old reading."""
         print("\n" + "─" * W)
         print(_c("📏  LOG CURRENT MILEAGE"))
         print(_c("(Type 'X' to cancel)"))
@@ -557,6 +573,7 @@ class MotoPulseCLI:
             print("❌  INVALID INPUT. MILEAGE MUST BE A NUMBER.")
 
     def schedule_task(self, moto: Motorcycle):
+        """Create a pending job from the standard list or a custom name. A job name seen before reuses its remembered interval. A new one asks for the interval and the due mileage, then remembers the interval. Always asks for a due date."""
         print("\n" + "─" * W)
         print(_c("🛠️   SCHEDULE MAINTENANCE TASK"))
         print(_c("(Type 'X' to cancel)"))
@@ -636,6 +653,7 @@ class MotoPulseCLI:
         print(f"✅  '{name}' SCHEDULED SUCCESSFULLY!")
 
     def view_alerts(self, moto: Motorcycle):
+        """List the pending jobs, most overdue first, marked OVERDUE or UPCOMING."""
         print("\n" + "─" * W)
         print(_c("🔔  PRIORITIZED ALERTS"))
         print("─" * W)
@@ -660,6 +678,7 @@ class MotoPulseCLI:
         input(_r("Press Enter to continue..."))
 
     def log_completed_maintenance(self, moto: Motorcycle):
+        """Mark a pending job as done. Asks for the cost and the completion date, then moves the job from the pending list into the service history at the current mileage."""
         print("\n" + "─" * W)
         print(_c("✅  LOG COMPLETED MAINTENANCE"))
         print(_c("(Type 'X' to cancel)"))

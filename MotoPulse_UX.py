@@ -11,6 +11,7 @@
 # 11/09/2026     Added header and comments        EPPE with Claude
 # 11/09/2026     Fixed due-date score dip         EPPE with Claude
 # 11/09/2026     Added RMPP initials              EPPE with Claude
+# 11/09/2026     Added method comments            EPPE with Claude
 # ======================================================================
 
 import json
@@ -28,12 +29,14 @@ class ServiceRecord:
     """One completed job: its date, the mileage and cost, and what was done."""
 
     def __init__(self, date: str, mileage: int, cost: float, description: str):
+        """Store one finished job. Mileage is the odometer reading in km and cost is in pesos."""
         self.date = date
         self.mileage = mileage
         self.cost = cost
         self.description = description
 
     def to_dict(self):
+        """Turn the record into plain values that can be written to the JSON save file."""
         return {
             "date": self.date,
             "mileage": self.mileage,
@@ -43,6 +46,7 @@ class ServiceRecord:
 
     @classmethod
     def from_dict(cls, data: dict):
+        """Rebuild a record from the dictionary read back from the JSON save file."""
         return cls(
             date=data["date"],
             mileage=data["mileage"],
@@ -63,6 +67,7 @@ class MaintenanceTask:
         suggested_mileage: int = 0,
         task_id: Optional[str] = None
     ):
+        """Create a task. suggested_mileage is the service interval in km (0 for a custom job). A new task_id is generated unless one is passed in."""
         # Timestamp as a string id. Tasks loaded from the save file keep the id they were saved with.
         self.task_id = task_id or str(datetime.now().timestamp())
         self.name = name                          
@@ -104,6 +109,7 @@ class MaintenanceTask:
         return urgency_score
 
     def to_dict(self):
+        """Turn the task into plain values that can be written to the JSON save file."""
         return {
             "task_id": self.task_id,
             "name": self.name,
@@ -115,6 +121,7 @@ class MaintenanceTask:
 
     @classmethod
     def from_dict(cls, data: dict):
+        """Rebuild a task from the save file, filling in defaults for fields that older save files lack."""
         # Older save files have no "name" field, so the description doubles as the name.
         legacy_desc = data.get("description", "MAINTENANCE")
         return cls(
@@ -131,6 +138,7 @@ class Motorcycle:
     """One motorcycle with its service history, open tasks and remembered service intervals."""
 
     def __init__(self, plate_number: str, make: str, model: str, year: int, current_mileage: int):
+        """Create a motorcycle with an empty service history, no pending tasks and no remembered intervals."""
         self.plate_number = plate_number
         self.make = make
         self.model = model
@@ -144,9 +152,11 @@ class Motorcycle:
         self.custom_intervals: Dict[str, int] = {}
 
     def add_service_record(self, record: ServiceRecord):
+        """Append a finished job to the service history."""
         self.service_history.append(record)
 
     def add_maintenance_task(self, task: MaintenanceTask):
+        """Add a scheduled job to the pending list."""
         self.pending_tasks.append(task)
 
     def get_tasks_by_priority(self) -> List[Tuple[int, MaintenanceTask]]:
@@ -166,12 +176,14 @@ class Motorcycle:
         return urgent_tasks
 
     def get_total_expenses(self) -> float:
+        """Return the total cost, in pesos, of every job in the service history."""
         total = 0.0
         for record in self.service_history:
             total += record.cost
         return total
 
     def to_dict(self):
+        """Turn the motorcycle, its history, tasks and intervals into plain values for the JSON save file."""
         return {
             "plate_number": self.plate_number,
             "make": self.make,
@@ -185,6 +197,7 @@ class Motorcycle:
 
     @classmethod
     def from_dict(cls, data: dict):
+        """Rebuild a motorcycle and all of its records from the save file. Missing lists default to empty."""
         moto = cls(
             plate_number=data["plate_number"],
             make=data["make"],
@@ -202,17 +215,21 @@ class User:
     """An account holder. Motorcycles are keyed by plate number."""
 
     def __init__(self, username: str, password_hash: str):
+        """Create an account from a username and a hashed password, with no motorcycles yet."""
         self.username = username
         self.password_hash = password_hash
         self.motorcycles: Dict[str, Motorcycle] = {}
 
     def add_motorcycle(self, moto: Motorcycle):
+        """Register a motorcycle under its plate number. Reusing a plate replaces the old entry."""
         self.motorcycles[moto.plate_number] = moto
 
     def get_motorcycle(self, plate_number: str) -> Optional[Motorcycle]:
+        """Return the motorcycle with this plate number, or None if the user has not added it."""
         return self.motorcycles.get(plate_number)
 
     def to_dict(self):
+        """Turn the account and all of its motorcycles into plain values for the JSON save file."""
         return {
             "username": self.username,
             "password_hash": self.password_hash,
@@ -221,6 +238,7 @@ class User:
 
     @classmethod
     def from_dict(cls, data: dict):
+        """Rebuild an account and its motorcycles from the save file."""
         user = cls(
             username=data["username"],
             password_hash=data["password_hash"]
@@ -234,6 +252,7 @@ class AppState:
     """All users plus the undo stack, saved together in one JSON file."""
 
     def __init__(self, data_file: str = "motopulse_data.json"):
+        """Start with no users and an empty undo stack. data_file is the JSON file that save_data and load_data use."""
         self.data_file = data_file
         self.users: Dict[str, User] = {}
         self.action_stack = []
@@ -243,6 +262,7 @@ class AppState:
         self.action_stack.append(action)
 
     def pop_action(self) -> Optional[dict]:
+        """Remove and return the latest undo entry, or None when the stack is empty."""
         if self.action_stack:
             return self.action_stack.pop()
         return None
