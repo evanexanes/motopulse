@@ -8,12 +8,12 @@
 # Date           Description                      Programmer name
 # ======================================================================
 # 10/08/2026     Initial Implementation           EPPE, RMPP
-# 11/09/2026     Added header and comments        EPPE with Claude
-# 11/09/2026     Default interval; prompt text    EPPE with Claude
-# 11/09/2026     Added RMPP initials              EPPE with Claude
-# 11/09/2026     Plain section comments           EPPE with Claude
-# 11/09/2026     Added method comments            EPPE with Claude
-# 11/09/2026     Security question for reset      EPPE with Claude
+# 11/09/2026     Added header and comments        EPPE
+# 11/09/2026     Default interval; prompt text    EPPE
+# 11/09/2026     Added RMPP initials              EPPE
+# 11/09/2026     Plain section comments           EPPE
+# 11/09/2026     Added method comments            EPPE
+# 11/09/2026     Security question for reset      EPPE
 # ======================================================================
 
 import sys
