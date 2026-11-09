@@ -34,5 +34,15 @@ model and the saving.
 - Dates are typed as text and parsed against eleven formats. A date picker would be safer.
 - Everything is in one JSON file, which is fine for a class project and not for real users.
 
+## Project layout
+
+| File | Role |
+|---|---|
+| `MotoPulse_UI.py` | The menus: login, dashboard, motorcycle screens, date parsing and undo |
+| `MotoPulse_UX.py` | The data model (users, motorcycles, tasks, service records), the priority queue and the JSON saving |
+
 ## Notes
-First-year coursework, shared as it was submitted apart from small edits.
+First-year coursework, shared as it was submitted apart from small edits. A later pass added a header block and comments to both files. The code was not changed.
+
+## Source file headers
+Every source file opens with a header block: program name, description, author, date compiled and a change history. A commit that changes a file adds a row to its history.
