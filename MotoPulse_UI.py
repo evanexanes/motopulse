@@ -13,6 +13,7 @@
 # 11/09/2026     Added RMPP initials              EPPE with Claude
 # 11/09/2026     Plain section comments           EPPE with Claude
 # 11/09/2026     Added method comments            EPPE with Claude
+# 11/09/2026     Security question for reset      EPPE with Claude
 # ======================================================================
 
 import sys
@@ -209,7 +210,7 @@ class MotoPulseCLI:
             print("❌  ERROR: INVALID USERNAME OR PASSWORD.")
 
     def register(self):
-        """Create a new account. The username must be new and not empty, and the password must be typed twice. Saves the data file."""
+        """Create a new account. The username must be new and not empty, and the password must be typed twice. Also stores a recovery question and the hash of its answer for forgot_password. Saves the data file."""
         print("\n" + "─" * W)
         print(_c("📝  REGISTER"))
         print("─" * W)
@@ -232,13 +233,28 @@ class MotoPulseCLI:
             print("❌  ERROR: PASSWORDS DO NOT MATCH.")
             return
 
-        new_user = User(username=username, password_hash=hash_password(password))
+        question = input(_r("Recovery question (asked if you forget your password): ")).strip()
+        if not question:
+            print("❌  RECOVERY QUESTION CANNOT BE EMPTY.")
+            return
+
+        answer = getpass(_r("Answer: ")).strip().lower()
+        if not answer:
+            print("❌  ANSWER CANNOT BE EMPTY.")
+            return
+
+        new_user = User(
+            username=username,
+            password_hash=hash_password(password),
+            security_question=question,
+            security_answer_hash=hash_password(answer)
+        )
         self.app_state.users[username] = new_user
         self.app_state.save_data()
         print(f"✅  REGISTRATION SUCCESSFUL! YOU CAN NOW LOG IN, {username.upper()}.")
 
     def forgot_password(self):
-        """Reset a password from the username alone. There is no identity check, which a classroom app can accept but a real one could not."""
+        """Reset a password after the user answers the recovery question set at registration. The answer is compared as a lower-case SHA-256 hash. Accounts created before the question existed have none and cannot be reset."""
         print("\n" + "─" * W)
         print(_c("🔑  FORGOT PASSWORD"))
         print("─" * W)
@@ -247,6 +263,16 @@ class MotoPulseCLI:
         user = self.app_state.users.get(username)
         if not user:
             print("❌  ERROR: USERNAME NOT FOUND.")
+            return
+
+        if not user.security_question:
+            print("❌  ERROR: THIS ACCOUNT HAS NO RECOVERY QUESTION, SO IT CANNOT BE RESET.")
+            return
+
+        print(f"RECOVERY QUESTION: {user.security_question}")
+        answer = getpass(_r("Answer: ")).strip().lower()
+        if hash_password(answer) != user.security_answer_hash:
+            print("❌  ERROR: INCORRECT ANSWER.")
             return
 
         new_password = getpass(_r("Enter new password: "))

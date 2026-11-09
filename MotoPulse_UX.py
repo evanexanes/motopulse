@@ -13,6 +13,7 @@
 # 11/09/2026     Added RMPP initials              EPPE with Claude
 # 11/09/2026     Added method comments            EPPE with Claude
 # 11/09/2026     Corrected two comments           EPPE with Claude
+# 11/09/2026     Security question for reset      EPPE with Claude
 # ======================================================================
 
 import json
@@ -215,10 +216,17 @@ class Motorcycle:
 class User:
     """An account holder. Motorcycles are keyed by plate number."""
 
-    def __init__(self, username: str, password_hash: str):
-        """Create an account from a username and a hashed password, with no motorcycles yet."""
+    def __init__(self, username: str, password_hash: str,
+                 security_question: str = "", security_answer_hash: str = ""):
+        """Create an account from a username and a hashed password, with no motorcycles yet.
+
+        The recovery question and the hash of its answer are what forgot_password checks before
+        it allows a reset. Accounts saved before this existed have both empty and cannot be reset.
+        """
         self.username = username
         self.password_hash = password_hash
+        self.security_question = security_question
+        self.security_answer_hash = security_answer_hash
         self.motorcycles: Dict[str, Motorcycle] = {}
 
     def add_motorcycle(self, moto: Motorcycle):
@@ -234,15 +242,19 @@ class User:
         return {
             "username": self.username,
             "password_hash": self.password_hash,
+            "security_question": self.security_question,
+            "security_answer_hash": self.security_answer_hash,
             "motorcycles": {plate: moto.to_dict() for plate, moto in self.motorcycles.items()}
         }
 
     @classmethod
     def from_dict(cls, data: dict):
-        """Rebuild an account and its motorcycles from the save file."""
+        """Rebuild an account and its motorcycles from the save file. Older files have no recovery fields."""
         user = cls(
             username=data["username"],
-            password_hash=data["password_hash"]
+            password_hash=data["password_hash"],
+            security_question=data.get("security_question", ""),
+            security_answer_hash=data.get("security_answer_hash", "")
         )
         for plate, moto_data in data.get("motorcycles", {}).items():
             user.motorcycles[plate] = Motorcycle.from_dict(moto_data)

@@ -26,7 +26,7 @@
 You register an account, add your motorcycles by plate number and schedule maintenance tasks. MotoPulse ranks the open tasks by how overdue they are, so the job that needs doing first is at the top of the list. Two first-year BSIT students built it as a team project for a data structures course.
 
 ## Features
-- **Accounts.** Register, log in and reset a password. Passwords are stored as SHA-256 hashes, never as text.
+- **Accounts.** Register, log in and reset a password. Registration asks for a recovery question, and a reset is allowed only after the right answer. Passwords and answers are stored as SHA-256 hashes, never as text.
 - **Motorcycles.** Add and edit them with plate, make, model, year and mileage.
 - **Jobs.** Pick from nine standard jobs (oil change, chain, brake fluid and so on) or add your own. Each job remembers the interval you set, and a standard job offers its usual interval as the default the first time.
 - **Priority queue.** Open tasks are ranked with `heapq`. Urgency adds the kilometres overdue to a date score: 10 points for each day overdue, 7 on the due date and 1 to 6 in the week before.
@@ -52,6 +52,7 @@ Keep both files in the same folder. `MotoPulse_UI.py` is the menus, and `MotoPul
 
 ## What I would change today
 - Passwords use plain SHA-256 with no salt. A real app needs a slow, salted hash such as bcrypt.
+- Accounts created before the recovery question existed cannot reset a password, because they have no answer to check. A short answer is also easy to guess.
 - Dates are typed as text and parsed against eleven formats. A date picker would be safer.
 - Everything is in one JSON file, which is fine for a class project and not for real users.
 
