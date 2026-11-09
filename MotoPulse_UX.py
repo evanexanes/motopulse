@@ -67,7 +67,7 @@ class MaintenanceTask:
         suggested_mileage: int = 0,
         task_id: Optional[str] = None
     ):
-        """Create a task. suggested_mileage is the service interval in km (0 for a custom job). A new task_id is generated unless one is passed in."""
+        """Create a task. suggested_mileage is the service interval in km, or 0 when it is unknown (older save files). A new task_id is generated unless one is passed in."""
         # Timestamp as a string id. Tasks loaded from the save file keep the id they were saved with.
         self.task_id = task_id or str(datetime.now().timestamp())
         self.name = name                          
