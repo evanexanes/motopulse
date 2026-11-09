@@ -15,7 +15,13 @@
 
 </div>
 
+## What this shows
+- A Python terminal app that ranks open maintenance jobs with a `heapq` priority queue, so the most overdue job comes first.
+- An undo stack reverses recent actions, and everything saves to a local JSON file.
+- Passwords and recovery answers are stored as SHA-256 hashes, never as text.
+
 ## Contents
+- [What this shows](#what-this-shows)
 - [About](#about)
 - [Features](#features)
 - [Run it](#run-it)
@@ -70,7 +76,7 @@ The code is first-year coursework, shared as it was submitted apart from small e
 Released under the [MIT License](LICENSE).
 
 ## Authors
-- **Evan Prens P. Exanes** · [GitHub](https://github.com/evanexanes) · [Portfolio](https://evanexanes.github.io/)
+- **Evan Prens P. Exanes** · [GitHub](https://github.com/evanexanes) · [Portfolio](https://evanexanes.github.io/) · [Contact](https://evanexanes.github.io/07-contact.html)
 - **Rhona-mae P. Prudenciado**
 
 See the [case study](https://evanexanes.github.io/09-case-study-motopulse.html) on the portfolio.
